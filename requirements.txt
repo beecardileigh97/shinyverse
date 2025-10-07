@@ -1,0 +1,12 @@
+fastapi>=0.95.0
+uvicorn>=0.22.0
+websockets>=11.0
+aiohttp>=3.8.0
+psutil>=5.9.0
+
+# Optional providers (uncomment / install when integrating)
+# openai
+# anthropic
+# ollama
+# pillow
+# opencv-python
