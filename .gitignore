@@ -1,0 +1,33 @@
+# Repository .gitignore - top-level
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Runtime artifacts
+logs/
+*.log
+screenshots/
+
+# Environment / secrets
+.env
+.env.*
+secrets.json
+*.secret
+*.key
+*.pem
+
+# Node
+node_modules/
+
+# IDEs / editors
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
