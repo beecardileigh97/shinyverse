@@ -9,6 +9,16 @@ __pycache__/
 # Logs
 logs/
 *.log
+screenshots/
+*.key
+*.pem
+*.env
+env/
+venv/
+
+# Ignore secrets file patterns
+*.secret
+secrets.json
 
 # OS files
 .DS_Store
