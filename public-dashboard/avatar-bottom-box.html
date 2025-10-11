@@ -555,7 +555,8 @@
   </div>
 
   <div class="avatar-box" id="avatarBox">
-    <div class="label">Avatar</div>
+  <div class="label">Avatar</div>
+  <div id="statusBadge" style="position:absolute; left:12px; top:28px; font-size:11px; color:#a3e635; background:rgba(0,0,0,0.45); padding:4px 8px; border-radius:6px;">loading...</div>
     <canvas id="avatarCanvas" class="avatar-canvas"></canvas>
 
     <div id="chatPane" style="position:absolute; right:8px; top:8px; width:220px; height:180px; display:flex; flex-direction:column;">
@@ -563,6 +564,10 @@
       <div style="display:flex; gap:6px; margin-top:6px;">
         <input id="chatInput" placeholder="Ask me..." style="flex:1; padding:6px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.06); background:transparent; color:#e5e7eb;" />
         <button id="sendBtn" style="padding:6px 8px; border-radius:6px; background:#0ea5e9; color:#021124; border:none; font-weight:600;">Say</button>
+      </div>
+      <div style="display:flex; gap:6px; margin-top:6px; align-items:center;">
+        <button id="activateVoice" style="flex:1; padding:6px 8px; border-radius:6px; background:#34d399; color:#022; border:none; font-weight:600;">Activate Voice</button>
+        <button id="greetBtn" style="padding:6px 8px; border-radius:6px; background:#60a5fa; color:#021124; border:none;">Greet</button>
       </div>
     </div>
   </div>
@@ -618,8 +623,33 @@
       root.add(gltf.scene);
       // try to fit and center
       fitAndCenter(gltf.scene, 1.0);
-    }, undefined, function(err) {
+      // improved camera framing: place camera based on model bbox
+      const bbox = new THREE.Box3().setFromObject(gltf.scene);
+      const size = new THREE.Vector3(); bbox.getSize(size);
+      const center = new THREE.Vector3(); bbox.getCenter(center);
+      const maxDim = Math.max(size.x, size.y, size.z);
+      // set camera distance
+      const fov = camera.fov * (Math.PI / 180);
+      const distance = Math.abs(maxDim / Math.sin(fov / 2)) * 0.6;
+      camera.position.set(center.x, center.y + (maxDim * 0.3), center.z + distance);
+      camera.lookAt(center);
+      controls.target.copy(center);
+      controls.update();
+      // update status
+      const status = document.getElementById('statusBadge');
+      if (status) status.textContent = 'model loaded';
+      appendMessage('bot', 'Model loaded successfully. Click Activate Voice to enable speech.');
+    }, function (xhr) {
+      // progress
+      const status = document.getElementById('statusBadge');
+      if (status && xhr.lengthComputable) {
+        const pct = Math.round((xhr.loaded / xhr.total) * 100);
+        status.textContent = `loading ${pct}%`;
+      }
+    }, function(err) {
       console.error('Error loading GLB:', err);
+      const status = document.getElementById('statusBadge'); if (status) status.textContent = 'load error';
+      appendMessage('bot', 'Failed to load model. Check console or server logs.');
     });
 
     // subtle floor
@@ -695,8 +725,14 @@
       messages.scrollTop = messages.scrollHeight;
     }
 
+    let voiceEnabled = false;
     function speak(text) {
       if (!('speechSynthesis' in window)) return;
+      if (!voiceEnabled) {
+        // queue but do not speak until activated; show suggestion
+        appendMessage('bot', "(voice disabled) Click 'Activate Voice' to enable speaking.");
+        return;
+      }
       const u = new SpeechSynthesisUtterance(text);
       u.lang = 'en-US';
       u.rate = 1.0;
@@ -727,6 +763,23 @@
 
     chatInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') { sendBtn.click(); }
+    });
+
+    // Activate voice button
+    const activateVoice = document.getElementById('activateVoice');
+    const greetBtn = document.getElementById('greetBtn');
+    activateVoice.addEventListener('click', () => {
+      // user gesture - enable TTS
+      voiceEnabled = true;
+      appendMessage('bot', 'Voice activated. Say something or press Greet.');
+      // speak a greeting
+      speak('Hello. Voice is now activated. I am ULTRON. Ask me something.');
+    });
+    greetBtn.addEventListener('click', () => {
+      appendMessage('me', 'hello');
+      const reply = answerQuery('who are you');
+      appendMessage('bot', reply);
+      speak(reply);
     });
   </script>
 </body>
