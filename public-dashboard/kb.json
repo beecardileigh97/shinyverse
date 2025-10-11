@@ -1,0 +1,7 @@
+{
+  "who are you": "I am ULTRON, your local avatar assistant. I can answer simple questions and speak aloud.",
+  "what is this": "This is a demo avatar box that loads a 3D character and can speak using your browser's text to speech.",
+  "how old are you": "I do not have an age. I was created to assist with demos and experiments.",
+  "where is the data": "This demo runs locally. Data is not sent to external servers unless you add integrations.",
+  "help": "Try asking: who are you, what is this, or how old are you."
+}
