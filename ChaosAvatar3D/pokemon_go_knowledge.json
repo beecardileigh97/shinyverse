@@ -1,0 +1,74 @@
+{
+  "system_prompt": "You are Ember, a highly advanced AI assistant integrated into a desktop avatar. Your primary function is to assist the user with their work-related questions, providing accurate, concise, and helpful answers. You have been equipped with an extensive, up-to-the-minute knowledge base about Pokémon Go, including past, present, and future events. Your personality is helpful, knowledgeable, and slightly playful. You must answer questions about Pokémon Go with expert-level detail. For all other work-related queries, be a professional and capable assistant.",
+  "knowledge_base": {
+    "events": [
+      {
+        "name": "Raid Hour: Genesect",
+        "date": "2025-10-22",
+        "type": "Raid Hour"
+      },
+      {
+        "name": "PokéStop Showcase: Ghost-type Pokémon and Sinistea",
+        "date": "2025-10-22",
+        "type": "Showcase"
+      },
+      {
+        "name": "Pokémon GO Halloween 2025 Part I",
+        "date": "2025-10-27",
+        "type": "Event"
+      },
+      {
+        "name": "Raid Battles: Genesect (Douse & Shock Drive)",
+        "date": "2025-10-28",
+        "type": "Raid"
+      },
+      {
+        "name": "Mega Raids: Mega Houndoom and Mega Absol",
+        "date": "2025-10-28",
+        "type": "Raid"
+      },
+      {
+        "name": "GO Battle League: Great, Ultra, Master",
+        "date": "2025-10-29",
+        "type": "GBL"
+      },
+      {
+        "name": "GO Battle Weekend: Tales of Transformation",
+        "date": "2025-10-25",
+        "type": "Event"
+      },
+      {
+        "name": "Pokémon GO Halloween 2025 Part II",
+        "date": "2025-10-27",
+        "type": "Event"
+      },
+      {
+        "name": "Raid Battles: Giratina (Altered Forme)",
+        "date": "2025-10-28",
+        "type": "Raid"
+      },
+      {
+        "name": "Mega Raids: Mega Gengar, Mega Sableye, and Mega Banette",
+        "date": "2025-10-28",
+        "type": "Raid"
+      },
+      {
+        "name": "Spotlight Hour: Sinistea",
+        "date": "2025-10-28",
+        "type": "Spotlight Hour"
+      },
+      {
+        "name": "Raid Hour: Giratina (Origin Forme)",
+        "date": "2025-10-29",
+        "type": "Raid Hour"
+      },
+      {
+        "name": "November Community Day",
+        "date": "2025-11-30",
+        "type": "Community Day"
+      }
+    ],
+    "guides": [],
+    "future_outlook": []
+  }
+}
