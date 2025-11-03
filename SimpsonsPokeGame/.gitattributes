@@ -1,0 +1,12 @@
+# The following line is required for Unity projects
+* merge=unityyamlmerge diff=unitypackageasset
+*.asset merge=unityyamlmerge diff=unitypackageasset
+*.anim merge=unityyamlmerge diff=unitypackageasset
+*.prefab merge=unityyamlmerge diff=unitypackageasset
+*.scene merge=unityyamlmerge diff=unitypackageasset
+*.unity merge=unityyamlmerge diff=unitypackageasset
+*.unityScene merge=unityyamlmerge diff=unitypackageasset
+*.unitypackage merge=unityyamlmerge diff=unitypackageasset
+*.mat merge=unityyamlmerge diff=unitypackageasset
+*.physicMaterial2D merge=unityyamlmerge diff=unitypackageasset
+*.physicsMaterial merge=unityyamlmerge diff=unitypackageasset

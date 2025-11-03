@@ -1,0 +1,4 @@
+repository "simpsons pocket monster/simpsons pocket monster@16768308471286@cloud"
+  path "/"
+    br "/main"
+    co "/main"

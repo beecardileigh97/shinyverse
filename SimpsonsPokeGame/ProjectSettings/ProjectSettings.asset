@@ -1,0 +1,100 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!129 &1
+ProjectSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 12
+  productName: SimpsonsPokeGame
+  productionBundleIdentifier: com.shinyverse.simpsonspokegame
+  displayResolutionDialog: 1
+  targetDevice: 2
+  targetResolution: 0
+  defaultIsNativeResolution: 1
+  macRetinaSupport: 1
+  runInBackground: 0
+  captureSingleScreen: 0
+  muteOtherAudioSources: 0
+  Prepare IOS For Recording: 0
+  Force IOS Speakers When Recording: 0
+  deferredShading: 1
+  enableRealtime CSM: 1
+  enableLightProbeProxyVolume: 1
+  useDynamicScale: 0
+  IOSMinimumOSVersion: 11.0
+  cameraUsageDescription: 
+  locationUsageDescription: 
+  microphoneUsageDescription: 
+  bluetoothUsageDescription: 
+  macOSTargetOsVersion: 10.13.0
+  switchNMETAOverride: 
+  switchMainThreadStackSize: 16777216
+  switchLogoFiles: []
+  switchPublisherNames: []
+  switchIcons: []
+  switchScreenResolutions: []
+  switchAllowStaticObjects: 0
+  switchTargetTempFolder: 
+  switchUseContainer: 0
+  switchLTOConfig: 0
+  switchSocketMemoryPoolSize: 6144
+  switchSocketAllocatorPoolSize: 32768
+  switchSocketConcurrencyLimit: 42
+  switchScreenRefreshRate: 60
+  switchUseVSync: 1
+  unetMaximumTransmitFragment: 1200
+  OnDemandOneshotMonolithic: 0
+  enableResolutionDialog: 1
+  displayResolutionDialog: 1
+  defaultScreenWidth: 1920
+  defaultScreenHeight: 1080
+  defaultScreenWidthWeb: 960
+  defaultScreenHeightWeb: 600
+  StereoRenderingPath: 0
+  activeColorSpace: 0
+  colorSpace: 0
+  allowFullscreenSwitch: 1
+  fullscreenMode: 1
+  usePlayerLog: 1
+  logObjCUncaughtExceptions: 1
+  enableCrashReportAPI: 0
+  cameraUsageDescription: 
+  locationUsageDescription: 
+  microphoneUsageDescription: 
+  switchNMETAOverride: 
+  switchMainThreadStackSize: 16777216
+  switchSocketMemoryPoolSize: 6144
+  m_SupportedAspectRatios:
+    4:3: 1
+    5:4: 1
+    16:10: 1
+    16:9: 1
+    Others: 1
+  bundleVersion: 0.0.1
+  preloadedAssets: []
+  metroInputSource: 0
+  wsaTransparentSwapchain: 0
+  m_HolographicPauseOnTrackingLoss: 1
+  xboxOneDisableKinectGpuReservation: 1
+  xboxOneEnable7thCore: 1
+  isWsaHolographicRemotingEnabled: 0
+  vehicleUsesRigidBody: 0
+  multiplayerRoleTypes: []
+  networkRoleTypes: []
+  cloudEnabled: 0
+  lightmapEncodingQuality: 1
+  useMacAppStoreValidation: 0
+  cloudCollisionType: 0
+  facebookSdkVersion: 7.4.0
+  apiCompatibilityLevel: 6
+  cloudDiagnosticsConnectionType: -1
+  targetColorSpace: 0
+  targetResolution: 0
+  defaultPhysicsScene: 0
+  defaultPhysicsScene2D: 0
+  useResolutionDialogs: 1
+  androidMinimumOSVersion: 19
+  allowUnsafePublicAPIs: 0
+  androidGamepadSupportLevel: 1
+  resolutionScalingMode: 0
+  androidSupportedAspectRatio: 1
+  androidMaxAspectRatio: 2.1

@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1
+Physics2DSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 4
+  m_Gravity: {x: 0, y: 0}
+  m_DefaultMaterial: {fileID: 0}
+  m_VelocityIterations: 8
+  m_PositionIterations: 3
+  m_VelocityConstraintsScale: 1
+  m_ConstraintScale: 1
+  m_MaxLinearCorrection: 0.2
+  m_MaxAngularCorrection: 8
+  m_MaxTranslationSpeed: 100
+  m_MaxRotationSpeed: 360
+  m_BodiesCount: 2
+  m_ContactsCount: 1
+  m_ColliderCount: 2
+  m_RulesCount: 0
+  Rules: []
+  m_BumpSpeculativeCollisionIterations: 1
+  m_SolverType: 0
+  m_DefaultContactOffset: 0.01
+  m_LayerCollisionMatrix: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
