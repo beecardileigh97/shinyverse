@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simpsons Pokemon - 3D Edition</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #000 0%, #0a0a2e 100%);
+            overflow: hidden;
+            height: 100vh;
+            color: #00ff88;
+        }
+        #container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+        }
+        #gameCanvas {
+            flex: 1;
+            background: radial-gradient(circle at 50% 50%, #1a2a4a, #000);
+        }
+        #ui {
+            width: 300px;
+            background: rgba(10, 10, 30, 0.95);
+            border-left: 3px solid #00d4ff;
+            overflow-y: auto;
+            padding: 15px;
+            box-shadow: -10px 0 30px rgba(0, 212, 255, 0.1);
+        }
+        .panel {
+            background: rgba(15, 31, 47, 0.8);
+            border: 2px solid #00ff88;
+            padding: 12px;
+            margin-bottom: 12px;
+            border-radius: 5px;
+            backdrop-filter: blur(10px);
+        }
+        .panel h3 {
+            color: #00d4ff;
+            margin-bottom: 8px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .stat {
+            font-size: 12px;
+            margin: 4px 0;
+            color: #00ff88;
+        }
+        .stat-label { display: inline-block; width: 80px; }
+        .stat-value { color: #00d4ff; font-weight: bold; }
+        .hp-bar {
+            width: 100%;
+            height: 10px;
+            background: #1a1a3a;
+            border: 1px solid #00ff88;
+            margin: 5px 0;
+            position: relative;
+            overflow: hidden;
+            border-radius: 3px;
+        }
+        .hp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00d4ff);
+            width: 100%;
+            transition: width 0.3s;
+            box-shadow: 0 0 10px #00ff88;
+        }
+        button {
+            background: linear-gradient(135deg, #00d4ff, #0088ff);
+            color: #000;
+            border: none;
+            padding: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 3px;
+            font-size: 12px;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            width: 100%;
+            margin: 5px 0;
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+        }
+        button:hover {
+            background: linear-gradient(135deg, #00ff88, #00d4ff);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+            transform: scale(1.05);
+        }
+        button:active { transform: scale(0.95); }
+        .creature-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+        }
+        .creature-btn {
+            padding: 8px;
+            font-size: 10px;
+        }
+        .creature-btn.active {
+            background: #00ff88 !important;
+            color: #000 !important;
+            border: 2px solid #00d4ff;
+        }
+        .log {
+            background: rgba(10, 26, 42, 0.8);
+            border: 1px solid #00d4ff;
+            padding: 8px;
+            height: 120px;
+            overflow-y: auto;
+            font-size: 11px;
+            color: #00ff88;
+            border-radius: 3px;
+        }
+        .log-entry {
+            margin: 2px 0;
+            padding-bottom: 2px;
+            border-bottom: 1px dotted #00d4ff;
+        }
+        .log-entry.critical { color: #ff0088; font-weight: bold; }
+        .log-entry.heal { color: #00ff88; }
+        .log-entry.damage { color: #ff6600; }
+        .controls {
+            background: rgba(15, 31, 47, 0.8);
+            border: 1px dashed #00d4ff;
+            padding: 10px;
+            font-size: 11px;
+            color: #00ff88;
+            border-radius: 3px;
+            margin-top: 10px;
+        }
+        .key { color: #00d4ff; font-weight: bold; }
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #00ff88;
+            margin-right: 5px;
+            box-shadow: 0 0 10px #00ff88;
+        }
+        .status-indicator.warning {
+            background: #ff6600;
+            box-shadow: 0 0 10px #ff6600;
+        }
+        .status-indicator.danger {
+            background: #ff0088;
+            box-shadow: 0 0 10px #ff0088;
+        }
+        #fps { position: absolute; top: 10px; right: 10px; color: #00ff88; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <canvas id="gameCanvas"></canvas>
+        <div id="ui">
+            <div class="panel">
+                <h3>🎮 Game Status</h3>
+                <div class="stat">
+                    <span class="status-indicator" id="statusIndicator"></span>
+                    <span id="gameStatus">Ready</span>
+                </div>
+                <div class="stat"><span class="stat-label">Position:</span> <span class="stat-value" id="playerPos">0, 0</span></div>
+                <div class="stat"><span class="stat-label">Creatures:</span> <span class="stat-value" id="creatureCount">4</span></div>
+            </div>
+
+            <div class="panel">
+                <h3>👾 Active Creature</h3>
+                <div class="stat"><span class="stat-label">Name:</span> <span class="stat-value" id="activeName">Springbolt</span></div>
+                <div class="stat"><span class="stat-label">Level:</span> <span class="stat-value" id="activeLevel">5</span></div>
+                <div class="hp-bar"><div class="hp-fill" id="playerHpBar"></div></div>
+                <div class="stat"><span class="stat-label">HP:</span> <span class="stat-value" id="playerHp">100</span>/<span id="playerMaxHp">100</span></div>
+                <div class="stat"><span class="stat-label">XP:</span> <span class="stat-value" id="playerXp">0</span>/<span id="playerXpMax">100</span></div>
+            </div>
+
+            <div class="panel">
+                <h3>⚔️ Battle Status</h3>
+                <div id="battleStatus" style="color: #00ff88; font-size: 11px;">Not in battle</div>
+                <div id="enemyInfo" style="display: none; margin-top: 8px;">
+                    <div style="color: #00d4ff; margin-bottom: 5px;"><span id="enemyName">Enemy</span></div>
+                    <div class="hp-bar"><div class="hp-fill" id="enemyHpBar"></div></div>
+                    <div class="stat"><span class="stat-label">HP:</span> <span class="stat-value" id="enemyHp">100</span>/<span id="enemyMaxHp">100</span></div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3>🎮 Actions</h3>
+                <div class="creature-selector" id="creatureSelector"></div>
+                <button onclick="game.action('attack')" style="background: linear-gradient(135deg, #ff6600, #ff0088);">⚡ Attack</button>
+                <button onclick="game.action('catch')" style="background: linear-gradient(135deg, #ff0088, #ff6600);">🔴 Catch</button>
+                <button onclick="game.action('flee')" style="background: linear-gradient(135deg, #00d4ff, #0088ff);">💨 Flee</button>
+            </div>
+
+            <div class="panel">
+                <h3>📊 Activity Log</h3>
+                <div class="log" id="activityLog"></div>
+            </div>
+
+            <div class="controls">
+                <div><span class="key">WASD</span> = Move</div>
+                <div><span class="key">Mouse</span> = Look Around</div>
+                <div><span class="key">E</span> = Interact</div>
+                <div><span class="key">Space</span> = Jump/Action</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="fps">FPS: 60</div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js"></script>
+
+    <script>
+        // ========== THREE.JS SETUP ==========
+        const canvas = document.getElementById('gameCanvas');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth * 0.8 / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+        renderer.setSize(window.innerWidth * 0.8, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFShadowShadowMap;
+        renderer.setClearColor(0x000000, 1);
+
+        // Scene setup
+        scene.background = new THREE.Color(0x000a1a);
+        scene.fog = new THREE.Fog(0x000a1a, 50, 100);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
+
+        const sunLight = new THREE.DirectionalLight(0x00d4ff, 0.8);
+        sunLight.position.set(20, 30, 20);
+        sunLight.castShadow = true;
+        sunLight.shadow.mapSize.width = 2048;
+        sunLight.shadow.mapSize.height = 2048;
+        sunLight.shadow.camera.left = -50;
+        sunLight.shadow.camera.right = 50;
+        sunLight.shadow.camera.top = 50;
+        sunLight.shadow.camera.bottom = -50;
+        scene.add(sunLight);
+
+        // Point light for atmosphere
+        const pointLight = new THREE.PointLight(0x00ff88, 0.3);
+        pointLight.position.set(0, 10, 0);
+        scene.add(pointLight);
+
+        // ========== GAME STATE ==========
+        const game = {
+            player: { x: 0, y: 0, z: 0, mesh: null },
+            creatures: [
+                { name: 'Springbolt', level: 5, hp: 100, maxHp: 100, x: -5, z: -5, xp: 0, type: 'electric', mesh: null },
+                { name: 'Beerling', level: 3, hp: 80, maxHp: 80, x: 5, z: -5, xp: 0, type: 'normal', mesh: null },
+                { name: 'Donuragon', level: 4, hp: 90, maxHp: 90, x: -5, z: 5, xp: 0, type: 'dark', mesh: null },
+                { name: 'Saxasaurus', level: 6, hp: 110, maxHp: 110, x: 5, z: 5, xp: 0, type: 'psychic', mesh: null }
+            ],
+            npcs: [
+                { name: 'Barney', x: -2, z: 2, mesh: null, mood: 'friendly' },
+                { name: 'Homer', x: 2, z: -2, mesh: null, mood: 'friendly' },
+                { name: 'Lisa', x: 0, z: -5, mesh: null, mood: 'friendly' }
+            ],
+            activeCreature: 0,
+            inBattle: false,
+            currentEnemy: null,
+            caught: [],
+            log: [],
+            keys: {},
+            objects3D: []
+        };
+
+        // Creature database
+        const creatureDb = [
+            { name: 'Springbolt', color: 0xffff00, icon: '⚡', type: 'electric', weakness: ['water'], resistant: ['flying'] },
+            { name: 'Beerling', color: 0xff8800, icon: '🍺', type: 'normal', weakness: ['fighting'], resistant: [] },
+            { name: 'Donuragon', color: 0xff0088, icon: '🍩', type: 'dark', weakness: ['fairy'], resistant: ['ghost'] },
+            { name: 'Saxasaurus', color: 0x00ff88, icon: '🎷', type: 'psychic', weakness: ['dark'], resistant: ['fighting'] }
+        ];
+
+        // ========== 3D OBJECT CREATION ==========
+        function createCreatureMesh(creature, creatureInfo) {
+            const group = new THREE.Group();
+            
+            // Body
+            const bodyGeometry = new THREE.BoxGeometry(0.5, 0.8, 0.5);
+            const bodyMaterial = new THREE.MeshStandardMaterial({
+                color: creatureInfo.color,
+                emissive: creatureInfo.color,
+                emissiveIntensity: 0.3,
+                metalness: 0.3,
+                roughness: 0.4
+            });
+            const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+            body.castShadow = true;
+            body.receiveShadow = true;
+            group.add(body);
+
+            // Head
+            const headGeometry = new THREE.SphereGeometry(0.3, 16, 16);
+            const head = new THREE.Mesh(headGeometry, bodyMaterial);
+            head.position.y = 0.6;
+            head.castShadow = true;
+            head.receiveShadow = true;
+            group.add(head);
+
+            // Eyes
+            const eyeGeometry = new THREE.SphereGeometry(0.08, 8, 8);
+            const eyeMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
+            
+            const eye1 = new THREE.Mesh(eyeGeometry, eyeMaterial);
+            eye1.position.set(-0.1, 0.75, 0.25);
+            group.add(eye1);
+            
+            const eye2 = new THREE.Mesh(eyeGeometry, eyeMaterial);
+            eye2.position.set(0.1, 0.75, 0.25);
+            group.add(eye2);
+
+            // Pupil
+            const pupilGeometry = new THREE.SphereGeometry(0.04, 8, 8);
+            const pupilMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
+            
+            const pupil1 = new THREE.Mesh(pupilGeometry, pupilMaterial);
+            pupil1.position.set(-0.1, 0.75, 0.32);
+            group.add(pupil1);
+            
+            const pupil2 = new THREE.Mesh(pupilGeometry, pupilMaterial);
+            pupil2.position.set(0.1, 0.75, 0.32);
+            group.add(pupil2);
+
+            // Limbs
+            const limbGeometry = new THREE.BoxGeometry(0.2, 0.5, 0.2);
+            for (let i = 0; i < 4; i++) {
+                const limb = new THREE.Mesh(limbGeometry, bodyMaterial);
+                const x = (i % 2 === 0) ? -0.15 : 0.15;
+                const z = (i < 2) ? -0.15 : 0.15;
+                limb.position.set(x, -0.4, z);
+                limb.castShadow = true;
+                limb.receiveShadow = true;
+                group.add(limb);
+            }
+
+            group.position.set(creature.x, 0.5, creature.z);
+            group.userData.creature = creature;
+            group.userData.originalColor = creatureInfo.color;
+            
+            return group;
+        }
+
+        function createNPCMesh(npc) {
+            const group = new THREE.Group();
+
+            // Body
+            const bodyGeometry = new THREE.CylinderGeometry(0.3, 0.4, 1, 8);
+            const bodyMaterial = new THREE.MeshStandardMaterial({
+                color: 0xff6600,
+                metalness: 0.2,
+                roughness: 0.6
+            });
+            const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+            body.castShadow = true;
+            body.receiveShadow = true;
+            group.add(body);
+
+            // Head
+            const headGeometry = new THREE.SphereGeometry(0.35, 16, 16);
+            const headMaterial = new THREE.MeshStandardMaterial({ color: 0xffd699 });
+            const head = new THREE.Mesh(headGeometry, headMaterial);
+            head.position.y = 0.8;
+            head.castShadow = true;
+            head.receiveShadow = true;
+            group.add(head);
+
+            // Hair
+            const hairGeometry = new THREE.SphereGeometry(0.38, 16, 16);
+            const hairMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
+            const hair = new THREE.Mesh(hairGeometry, hairMaterial);
+            hair.position.set(0, 1.0, 0);
+            hair.scale.y = 0.6;
+            hair.castShadow = true;
+            group.add(hair);
+
+            // Eyes
+            const eyeGeometry = new THREE.SphereGeometry(0.1, 8, 8);
+            const eyeMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
+            
+            const eye1 = new THREE.Mesh(eyeGeometry, eyeMaterial);
+            eye1.position.set(-0.12, 0.95, 0.3);
+            group.add(eye1);
+            
+            const eye2 = new THREE.Mesh(eyeGeometry, eyeMaterial);
+            eye2.position.set(0.12, 0.95, 0.3);
+            group.add(eye2);
+
+            group.position.set(npc.x, 0, npc.z);
+            group.userData.npc = npc;
+            return group;
+        }
+
+        function createPlayerMesh() {
+            const group = new THREE.Group();
+
+            // Body
+            const bodyGeometry = new THREE.BoxGeometry(0.4, 0.8, 0.4);
+            const bodyMaterial = new THREE.MeshStandardMaterial({
+                color: 0xffff00,
+                emissive: 0xffff00,
+                emissiveIntensity: 0.2,
+                metalness: 0.4,
+                roughness: 0.5
+            });
+            const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+            body.castShadow = true;
+            body.receiveShadow = true;
+            group.add(body);
+
+            // Head
+            const headGeometry = new THREE.BoxGeometry(0.35, 0.35, 0.35);
+            const head = new THREE.Mesh(headGeometry, bodyMaterial);
+            head.position.y = 0.65;
+            head.castShadow = true;
+            head.receiveShadow = true;
+            group.add(head);
+
+            // Eyes
+            const eyeGeometry = new THREE.SphereGeometry(0.08, 8, 8);
+            const eyeMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
+            
+            for (let i = 0; i < 2; i++) {
+                const eye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+                eye.position.set((i === 0 ? -0.1 : 0.1), 0.75, 0.2);
+                group.add(eye);
+            }
+
+            group.position.set(game.player.x, 0, game.player.z);
+            return group;
+        }
+
+        // ========== CREATE GROUND ==========
+        const groundGeometry = new THREE.PlaneGeometry(100, 100);
+        const groundMaterial = new THREE.MeshStandardMaterial({
+            color: 0x1a3a2a,
+            metalness: 0.1,
+            roughness: 0.8
+        });
+        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        ground.rotation.x = -Math.PI / 2;
+        ground.receiveShadow = true;
+        scene.add(ground);
+
+        // Grid lines
+        const gridHelper = new THREE.GridHelper(100, 20, 0x00d4ff, 0x00ff88);
+        gridHelper.position.y = 0.01;
+        scene.add(gridHelper);
+
+        // Create 3D objects
+        game.player.mesh = createPlayerMesh();
+        scene.add(game.player.mesh);
+
+        game.creatures.forEach((creature, index) => {
+            const creatureInfo = creatureDb[index];
+            const mesh = createCreatureMesh(creature, creatureInfo);
+            creature.mesh = mesh;
+            scene.add(mesh);
+        });
+
+        game.npcs.forEach((npc, index) => {
+            const mesh = createNPCMesh(npc);
+            npc.mesh = mesh;
+            scene.add(mesh);
+        });
+
+        // Add floating particles
+        function createParticles() {
+            const particleCount = 50;
+            const particles = new THREE.BufferGeometry();
+            const positions = [];
+            
+            for (let i = 0; i < particleCount; i++) {
+                positions.push(
+                    (Math.random() - 0.5) * 80,
+                    Math.random() * 30,
+                    (Math.random() - 0.5) * 80
+                );
+            }
+            
+            particles.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), 3));
+            const material = new THREE.PointsMaterial({
+                color: 0x00ff88,
+                size: 0.2,
+                sizeAttenuation: true,
+                transparent: true,
+                opacity: 0.6
+            });
+            
+            return new THREE.Points(particles, material);
+        }
+
+        const particles = createParticles();
+        scene.add(particles);
+
+        camera.position.set(0, 8, 15);
+        camera.lookAt(0, 0, 0);
+
+        // ========== UI UPDATE ==========
+        function updateUI() {
+            const active = game.creatures[game.activeCreature];
+            document.getElementById('activeName').textContent = active.name;
+            document.getElementById('activeLevel').textContent = active.level;
+            document.getElementById('playerHp').textContent = active.hp;
+            document.getElementById('playerMaxHp').textContent = active.maxHp;
+            document.getElementById('playerHpBar').style.width = (active.hp / active.maxHp * 100) + '%';
+            document.getElementById('playerXp').textContent = active.xp;
+            document.getElementById('playerXpMax').textContent = active.level * 100;
+            document.getElementById('playerPos').textContent = `${game.player.x.toFixed(1)}, ${game.player.z.toFixed(1)}`;
+            
+            if (game.inBattle && game.currentEnemy) {
+                document.getElementById('gameStatus').textContent = '🔴 IN BATTLE!';
+                document.getElementById('statusIndicator').className = 'status-indicator danger';
+                document.getElementById('battleStatus').textContent = '🔴 IN BATTLE!';
+                document.getElementById('battleStatus').style.color = '#ff0088';
+                document.getElementById('enemyInfo').style.display = 'block';
+                document.getElementById('enemyName').textContent = game.currentEnemy.name;
+                document.getElementById('enemyHp').textContent = game.currentEnemy.hp;
+                document.getElementById('enemyMaxHp').textContent = game.currentEnemy.maxHp;
+                document.getElementById('enemyHpBar').style.width = (game.currentEnemy.hp / game.currentEnemy.maxHp * 100) + '%';
+            } else {
+                document.getElementById('gameStatus').textContent = '✅ Ready';
+                document.getElementById('statusIndicator').className = 'status-indicator';
+                document.getElementById('battleStatus').textContent = '✅ Ready';
+                document.getElementById('battleStatus').style.color = '#00ff88';
+                document.getElementById('enemyInfo').style.display = 'none';
+            }
+
+            document.getElementById('activityLog').innerHTML = game.log.slice(0, 15).map(l => `<div class="log-entry">${l}</div>`).join('');
+
+            const selector = document.getElementById('creatureSelector');
+            if (selector.children.length === 0) {
+                game.creatures.forEach((c, i) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'creature-btn' + (i === game.activeCreature ? ' active' : '');
+                    btn.textContent = c.name;
+                    btn.onclick = () => game.switchCreature(i);
+                    selector.appendChild(btn);
+                });
+            } else {
+                game.creatures.forEach((c, i) => {
+                    selector.children[i].classList.toggle('active', i === game.activeCreature);
+                });
+            }
+        }
+
+        game.addLog = function(msg) {
+            this.log.unshift(msg);
+            if (this.log.length > 30) this.log.pop();
+            updateUI();
+        };
+
+        game.switchCreature = function(i) {
+            if (this.creatures[i].hp > 0) {
+                this.activeCreature = i;
+                this.addLog(`Switched to ${this.creatures[i].name}!`);
+            } else {
+                this.addLog(`${this.creatures[i].name} is fainted!`);
+            }
+        };
+
+        game.calculateDamage = function(attacker, defender) {
+            let baseDmg = Math.random() * 10 + 15;
+            let multiplier = 1;
+            
+            const attackerInfo = creatureDb.find(c => c.name === attacker.name);
+            const defenderInfo = creatureDb.find(c => c.name === defender.name);
+            
+            if (attackerInfo && defenderInfo) {
+                if (defenderInfo.weakness && defenderInfo.weakness.includes(attackerInfo.type)) {
+                    multiplier = 1.5;
+                    this.addLog(`💥 SUPER EFFECTIVE!`);
+                }
+            }
+            
+            if (Math.random() < 0.15) {
+                multiplier *= 1.5;
+                this.addLog(`⚡ Critical hit!`);
+            }
+            
+            return baseDmg * multiplier;
+        };
+
+        game.gainXP = function(amount, creature) {
+            creature.xp += amount;
+            const xpNeeded = creature.level * 100;
+            
+            while (creature.xp >= xpNeeded) {
+                creature.level++;
+                creature.xp -= xpNeeded;
+                creature.maxHp += 10;
+                creature.hp = creature.maxHp;
+                this.addLog(`🎉 ${creature.name} reached level ${creature.level}!`);
+            }
+        };
+
+        game.getCatchRate = function(playerLevel, enemyLevel) {
+            const levelDiff = playerLevel - enemyLevel;
+            let baseRate = 0.4;
+            
+            if (levelDiff >= 5) baseRate = 0.8;
+            else if (levelDiff >= 2) baseRate = 0.6;
+            else if (levelDiff >= 0) baseRate = 0.4;
+            else if (levelDiff === -1) baseRate = 0.3;
+            else if (levelDiff <= -3) baseRate = 0.15;
+            
+            return Math.min(Math.max(baseRate + (Math.random() * 0.1 - 0.05), 0.05), 0.95);
+        };
+
+        game.action = function(action) {
+            if (!this.inBattle) {
+                this.addLog('Not in battle!');
+                return;
+            }
+
+            const active = this.creatures[this.activeCreature];
+            const enemy = this.currentEnemy;
+
+            if (action === 'attack') {
+                const dmg = this.calculateDamage(active, enemy);
+                enemy.hp -= dmg;
+                this.addLog(`${active.name} attacked for ${dmg.toFixed(0)} damage!`);
+                
+                if (enemy.hp <= 0) {
+                    this.addLog(`🎉 ${enemy.name} fainted!`);
+                    this.inBattle = false;
+                    const xpReward = enemy.level * 50;
+                    this.gainXP(xpReward, active);
+                    active.hp = Math.min(active.hp + 20, active.maxHp);
+                } else {
+                    setTimeout(() => this.enemyTurn(), 500);
+                }
+            } else if (action === 'catch') {
+                const catchRate = this.getCatchRate(active.level, enemy.level);
+                if (Math.random() < catchRate) {
+                    this.addLog(`🎉 Caught ${enemy.name}!`);
+                    this.caught.push(enemy.name);
+                    this.inBattle = false;
+                } else {
+                    this.addLog(`❌ ${enemy.name} broke free!`);
+                    setTimeout(() => this.enemyTurn(), 500);
+                }
+            } else if (action === 'flee') {
+                if (Math.random() > 0.3) {
+                    this.addLog('💨 Fled successfully!');
+                    this.inBattle = false;
+                } else {
+                    this.addLog('❌ Cannot escape!');
+                    setTimeout(() => this.enemyTurn(), 500);
+                }
+            }
+            updateUI();
+        };
+
+        game.enemyTurn = function() {
+            if (!this.inBattle) return;
+            const enemy = this.currentEnemy;
+            const active = this.creatures[this.activeCreature];
+            const healthPercent = enemy.hp / enemy.maxHp;
+            
+            let decision = 'attack';
+            if (healthPercent < 0.3) decision = 'heal';
+            else if (Math.random() > 0.7) decision = 'special';
+            
+            if (decision === 'heal') {
+                enemy.hp = Math.min(enemy.hp + 20, enemy.maxHp);
+                this.addLog(`💊 ${enemy.name} used Restore!`);
+            } else if (decision === 'special') {
+                const dmg = this.calculateDamage(enemy, active) * 1.3;
+                active.hp -= dmg;
+                this.addLog(`⚡ ${enemy.name} used Special Attack for ${dmg.toFixed(0)}!`);
+            } else {
+                const dmg = this.calculateDamage(enemy, active);
+                active.hp -= dmg;
+                this.addLog(`${enemy.name} attacked for ${dmg.toFixed(0)}!`);
+            }
+            
+            if (active.hp <= 0) {
+                this.addLog(`😢 ${active.name} fainted!`);
+                this.inBattle = false;
+            }
+            updateUI();
+        };
+
+        game.encounter = function() {
+            if (this.inBattle) return;
+            const creature = this.creatures[Math.floor(Math.random() * this.creatures.length)];
+            this.currentEnemy = { ...creature, hp: creature.maxHp };
+            this.inBattle = true;
+            this.addLog(`⚠️ A wild ${this.currentEnemy.name} appeared!`);
+            updateUI();
+        };
+
+        // ========== INPUT HANDLING ==========
+        window.addEventListener('keydown', (e) => {
+            game.keys[e.key.toLowerCase()] = true;
+            if (e.key === 'e' || e.key === 'E') {
+                if (Math.random() > 0.6) game.encounter();
+            }
+            if (e.key === ' ') {
+                e.preventDefault();
+                if (Math.random() > 0.5) game.encounter();
+            }
+        });
+        
+        window.addEventListener('keyup', (e) => {
+            game.keys[e.key.toLowerCase()] = false;
+        });
+
+        // ========== ANIMATION LOOP ==========
+        let lastTime = Date.now();
+        let frameCount = 0;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const now = Date.now();
+            const deltaTime = (now - lastTime) / 1000;
+            lastTime = now;
+
+            // Player movement
+            const speed = 10;
+            if (game.keys['w']) game.player.z -= speed * deltaTime;
+            if (game.keys['s']) game.player.z += speed * deltaTime;
+            if (game.keys['a']) game.player.x -= speed * deltaTime;
+            if (game.keys['d']) game.player.x += speed * deltaTime;
+
+            // Clamp player position
+            game.player.x = Math.max(-40, Math.min(40, game.player.x));
+            game.player.z = Math.max(-40, Math.min(40, game.player.z));
+
+            // Update player mesh
+            game.player.mesh.position.set(game.player.x, 0, game.player.z);
+
+            // Animate creatures (bobbing)
+            game.creatures.forEach((creature, index) => {
+                if (creature.mesh) {
+                    creature.mesh.position.y = 0.5 + Math.sin(now * 0.003 + index) * 0.2;
+                    creature.mesh.rotation.y += 0.01;
+                }
+            });
+
+            // Animate NPCs
+            game.npcs.forEach((npc, index) => {
+                if (npc.mesh) {
+                    npc.mesh.position.y = 0 + Math.cos(now * 0.002 + index) * 0.1;
+                    npc.mesh.rotation.y += 0.005;
+                }
+            });
+
+            // Camera follow player
+            const targetCamX = game.player.x + 8;
+            const targetCamZ = game.player.z + 15;
+            camera.position.x += (targetCamX - camera.position.x) * 0.05;
+            camera.position.z += (targetCamZ - camera.position.z) * 0.05;
+            camera.lookAt(game.player.x, 2, game.player.z);
+
+            // Particle animation
+            particles.rotation.y += 0.0001;
+
+            renderer.render(scene, camera);
+
+            // FPS counter
+            frameCount++;
+            if (now % 1000 < 16) {
+                document.getElementById('fps').textContent = 'FPS: ' + frameCount;
+                frameCount = 0;
+            }
+        }
+
+        // Initialize
+        updateUI();
+        game.addLog('🌟 Welcome to 3D Simpsons Pokemon!');
+        game.addLog('Use WASD to move, E to interact');
+        game.addLog('Walk around to find creatures!');
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            const width = window.innerWidth * 0.8;
+            const height = window.innerHeight;
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+        });
+
+        // Auto-save every 30 seconds
+        setInterval(() => {
+            const saveData = {
+                creatures: game.creatures.map(c => ({ ...c, mesh: null })),
+                caught: [...game.caught]
+            };
+            localStorage.setItem('simpsonsPokeSave3D', JSON.stringify(saveData));
+        }, 30000);
+
+        animate();
+    </script>
+</body>
+</html>
