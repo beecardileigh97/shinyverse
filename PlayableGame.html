@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simpsons Pokemon Game</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #00ff88;
+        }
+        #gameContainer {
+            display: flex;
+            gap: 20px;
+            background: #0a0a1a;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #00d4ff;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+        #gameArea {
+            width: 400px;
+            height: 400px;
+            background: #1a2a3a;
+            border: 2px solid #00d4ff;
+            position: relative;
+            cursor: pointer;
+        }
+        #canvas {
+            width: 100%;
+            height: 100%;
+            image-rendering: pixelated;
+        }
+        #sidebar {
+            width: 250px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .panel {
+            background: #0f1f2f;
+            border: 2px solid #00ff88;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .panel h3 {
+            color: #00d4ff;
+            margin-bottom: 8px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .stat {
+            font-size: 11px;
+            margin: 4px 0;
+            color: #00ff88;
+        }
+        .stat-label { display: inline-block; width: 80px; }
+        .stat-value { color: #00d4ff; font-weight: bold; }
+        .hp-bar {
+            width: 100%;
+            height: 8px;
+            background: #333;
+            border: 1px solid #00ff88;
+            margin: 5px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .hp-fill {
+            height: 100%;
+            background: #00ff88;
+            width: 100%;
+            transition: width 0.3s;
+        }
+        button {
+            background: #00d4ff;
+            color: #000;
+            border: none;
+            padding: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 3px;
+            font-size: 11px;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+        button:hover {
+            background: #00ff88;
+            transform: scale(1.05);
+        }
+        button:active {
+            transform: scale(0.95);
+        }
+        .creature-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+            font-size: 10px;
+        }
+        .creature-btn {
+            padding: 6px;
+            font-size: 10px;
+        }
+        .creature-btn.active {
+            background: #00ff88;
+            border: 2px solid #00d4ff;
+        }
+        .log {
+            background: #0a1a2a;
+            border: 1px solid #00d4ff;
+            padding: 8px;
+            height: 150px;
+            overflow-y: auto;
+            font-size: 10px;
+            color: #00ff88;
+        }
+        .log-entry {
+            margin: 2px 0;
+            border-bottom: 1px dotted #00d4ff;
+            padding-bottom: 2px;
+        }
+        .controls {
+            background: #0f1f2f;
+            border: 1px dashed #00d4ff;
+            padding: 10px;
+            font-size: 11px;
+            color: #00ff88;
+            border-radius: 3px;
+        }
+        .key { color: #00d4ff; font-weight: bold; }
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 0 10px #00d4ff; }
+            50% { text-shadow: 0 0 20px #00ff88; }
+        }
+        .battle-active {
+            animation: glow 0.5s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="gameArea">
+            <canvas id="canvas"></canvas>
+        </div>
+        <div id="sidebar">
+            <div class="panel">
+                <h3>📍 Player</h3>
+                <div class="stat"><span class="stat-label">Name:</span> <span class="stat-value">You</span></div>
+                <div class="stat"><span class="stat-label">Level:</span> <span class="stat-value" id="playerLevel">1</span></div>
+            </div>
+
+            <div class="panel">
+                <h3>⚔️ Battle Status</h3>
+                <div id="battleStatus" style="color: #00ff88; font-size: 11px;">Not in battle</div>
+                <div id="enemyInfo" style="display: none; margin-top: 8px;">
+                    <div style="color: #00d4ff; margin-bottom: 5px;"><span id="enemyName">Enemy</span></div>
+                    <div class="hp-bar"><div class="hp-fill" id="enemyHpBar"></div></div>
+                    <div class="stat"><span class="stat-label">HP:</span> <span class="stat-value" id="enemyHp">100</span>/<span id="enemyMaxHp">100</span></div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3>👾 Your Team</h3>
+                <div id="activeCreatureInfo">
+                    <div class="stat"><span class="stat-label">Name:</span> <span class="stat-value" id="activeName">Springbolt</span></div>
+                    <div class="stat"><span class="stat-label">Level:</span> <span class="stat-value" id="activeLevel">5</span></div>
+                    <div class="hp-bar"><div class="hp-fill" id="playerHpBar" style="width: 100%;"></div></div>
+                    <div class="stat"><span class="stat-label">HP:</span> <span class="stat-value" id="playerHp">100</span>/<span id="playerMaxHp">100</span></div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3>🎮 Actions</h3>
+                <div class="creature-selector" id="creatureSelector"></div>
+                <button onclick="game.action('attack')" style="width: 100%; margin-top: 10px;">⚡ Attack</button>
+                <button onclick="game.action('catch')" style="width: 100%; margin-top: 5px;">🔴 Catch</button>
+                <button onclick="game.action('flee')" style="width: 100%; margin-top: 5px;">💨 Flee</button>
+            </div>
+
+            <div class="panel">
+                <h3>📋 Activity Log</h3>
+                <div class="log" id="activityLog"></div>
+            </div>
+
+            <div class="controls">
+                <div><span class="key">WASD</span> or <span class="key">Arrows</span> = Move</div>
+                <div><span class="key">E</span> = Talk/Interact</div>
+                <div><span class="key">Space</span> = Action</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 400;
+        canvas.height = 400;
+
+        const GRID_SIZE = 40;
+        const COLS = canvas.width / GRID_SIZE;
+        const ROWS = canvas.height / GRID_SIZE;
+
+        // Game state
+        const game = {
+            player: { x: 5, y: 5, width: 1, height: 1 },
+            creatures: [
+                { name: 'Springbolt', level: 5, hp: 100, maxHp: 100, x: 2, y: 2, xp: 0, type: 'electric' },
+                { name: 'Beerling', level: 3, hp: 80, maxHp: 80, x: 8, y: 2, xp: 0, type: 'normal' },
+                { name: 'Donuragon', level: 4, hp: 90, maxHp: 90, x: 2, y: 8, xp: 0, type: 'dark' },
+                { name: 'Saxasaurus', level: 6, hp: 110, maxHp: 110, x: 8, y: 8, xp: 0, type: 'psychic' }
+            ],
+            npcs: [
+                { name: 'Barney', x: 3, y: 3, msg: 'Have you seen any cool creatures?' },
+                { name: 'Homer', x: 7, y: 7, msg: 'These creatures look tasty!' },
+                { name: 'Lisa', x: 5, y: 1, msg: 'Be kind to creatures!' }
+            ],
+            activeCreature: 0,
+            inBattle: false,
+            currentEnemy: null,
+            caught: [],
+            log: [],
+            keys: {}
+        };
+
+        // Creatures database with types and moves
+        const creatureDb = [
+            { name: 'Springbolt', color: '#ffff00', icon: '⚡', type: 'electric', weakness: ['water'], resistant: ['flying'] },
+            { name: 'Beerling', color: '#ff8800', icon: '🍺', type: 'normal', weakness: ['fighting'], resistant: [] },
+            { name: 'Donuragon', color: '#ff0088', icon: '🍩', type: 'dark', weakness: ['fairy'], resistant: ['ghost'] },
+            { name: 'Saxasaurus', color: '#00ff88', icon: '🎷', type: 'psychic', weakness: ['dark'], resistant: ['fighting'] }
+        ];
+
+        // Add log entry with color coding
+        game.addLog = function(msg) {
+            this.log.unshift(msg);
+            if (this.log.length > 20) this.log.pop();
+            updateUI();
+        };
+
+        // Calculate damage with type advantages
+        game.calculateDamage = function(attacker, defender, isEnemy) {
+            let baseDmg = Math.random() * 10 + 15; // 15-25 base (reduced variance)
+            let multiplier = 1;
+            
+            // Type advantage calculation
+            const attackerInfo = creatureDb.find(c => c.name === attacker.name);
+            const defenderInfo = creatureDb.find(c => c.name === defender.name);
+            
+            if (attackerInfo && defenderInfo) {
+                if (defenderInfo.weakness && defenderInfo.weakness.includes(attackerInfo.type)) {
+                    multiplier = 1.5;
+                    this.addLog(`💥 SUPER EFFECTIVE!`);
+                } else if (defenderInfo.resistant && defenderInfo.resistant.includes(attackerInfo.type)) {
+                    multiplier = 0.7;
+                    this.addLog(`🛡️ Not very effective...`);
+                }
+            }
+            
+            // Critical hit chance (15%)
+            if (Math.random() < 0.15) {
+                multiplier *= 1.5;
+                this.addLog(`⚡ Critical hit!`);
+            }
+            
+            return baseDmg * multiplier;
+        };
+
+        // XP and leveling system
+        game.gainXP = function(amount, creature) {
+            creature.xp = (creature.xp || 0) + amount;
+            const xpNeeded = creature.level * 100;
+            
+            while (creature.xp >= xpNeeded) {
+                creature.level++;
+                creature.xp -= xpNeeded;
+                creature.maxHp += 10;
+                creature.hp = creature.maxHp;
+                this.addLog(`🎉 ${creature.name} reached level ${creature.level}!`);
+            }
+        };
+
+        // Difficulty scaling catch rate
+        game.getCatchRate = function(playerLevel, enemyLevel) {
+            const levelDiff = playerLevel - enemyLevel;
+            let baseRate = 0.4;
+            
+            if (levelDiff >= 5) baseRate = 0.8;
+            else if (levelDiff >= 2) baseRate = 0.6;
+            else if (levelDiff >= 0) baseRate = 0.4;
+            else if (levelDiff === -1) baseRate = 0.3;
+            else if (levelDiff <= -3) baseRate = 0.15;
+            
+            return Math.min(Math.max(baseRate + (Math.random() * 0.1 - 0.05), 0.05), 0.95);
+        };
+
+        // Update UI
+        function updateUI() {
+            const active = game.creatures[game.activeCreature];
+            document.getElementById('activeName').textContent = active.name;
+            document.getElementById('activeLevel').textContent = active.level;
+            document.getElementById('playerHp').textContent = active.hp;
+            document.getElementById('playerMaxHp').textContent = active.maxHp;
+            document.getElementById('playerHpBar').style.width = (active.hp / active.maxHp * 100) + '%';
+            
+            if (game.inBattle && game.currentEnemy) {
+                document.getElementById('battleStatus').textContent = '🔴 IN BATTLE!';
+                document.getElementById('battleStatus').classList.add('battle-active');
+                document.getElementById('enemyInfo').style.display = 'block';
+                document.getElementById('enemyName').textContent = game.currentEnemy.name;
+                document.getElementById('enemyHp').textContent = game.currentEnemy.hp;
+                document.getElementById('enemyMaxHp').textContent = game.currentEnemy.maxHp;
+                document.getElementById('enemyHpBar').style.width = (game.currentEnemy.hp / game.currentEnemy.maxHp * 100) + '%';
+            } else {
+                document.getElementById('battleStatus').textContent = '✅ Ready';
+                document.getElementById('battleStatus').classList.remove('battle-active');
+                document.getElementById('enemyInfo').style.display = 'none';
+            }
+
+            document.getElementById('activityLog').innerHTML = game.log.map(l => `<div class="log-entry">${l}</div>`).join('');
+
+            // Update creature selector
+            const selector = document.getElementById('creatureSelector');
+            if (selector.children.length === 0) {
+                game.creatures.forEach((c, i) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'creature-btn' + (i === game.activeCreature ? ' active' : '');
+                    btn.textContent = c.name;
+                    btn.onclick = () => game.switchCreature(i);
+                    selector.appendChild(btn);
+                });
+            } else {
+                game.creatures.forEach((c, i) => {
+                    selector.children[i].classList.toggle('active', i === game.activeCreature);
+                });
+            }
+        }
+
+        // Switch active creature
+        game.switchCreature = function(i) {
+            if (this.creatures[i].hp > 0) {
+                this.activeCreature = i;
+                this.addLog(`Switched to ${this.creatures[i].name}!`);
+            } else {
+                this.addLog(`${this.creatures[i].name} is fainted!`);
+            }
+        };
+
+        // Game actions with improved AI
+        game.action = function(action) {
+            if (!this.inBattle) {
+                this.addLog('Not in battle!');
+                return;
+            }
+
+            const active = this.creatures[this.activeCreature];
+            const enemy = this.currentEnemy;
+
+            if (action === 'attack') {
+                const dmg = this.calculateDamage(active, enemy);
+                enemy.hp -= dmg;
+                this.addLog(`${active.name} attacked for ${dmg.toFixed(0)} damage!`);
+                
+                if (enemy.hp <= 0) {
+                    this.addLog(`🎉 ${enemy.name} fainted!`);
+                    this.inBattle = false;
+                    const xpReward = enemy.level * 50;
+                    this.gainXP(xpReward, active);
+                    active.hp = Math.min(active.hp + 20, active.maxHp);
+                } else {
+                    setTimeout(() => this.enemyTurn(), 500);
+                }
+            } else if (action === 'catch') {
+                const catchRate = this.getCatchRate(active.level, enemy.level);
+                if (Math.random() < catchRate) {
+                    this.addLog(`🎉 Caught ${enemy.name}!`);
+                    this.caught.push(enemy.name);
+                    this.inBattle = false;
+                } else {
+                    this.addLog(`❌ ${enemy.name} broke free!`);
+                    setTimeout(() => this.enemyTurn(), 500);
+                }
+            } else if (action === 'flee') {
+                if (Math.random() > 0.3) {
+                    this.addLog('💨 Fled successfully!');
+                    this.inBattle = false;
+                } else {
+                    this.addLog('❌ Cannot escape!');
+                    setTimeout(() => this.enemyTurn(), 500);
+                }
+            }
+            updateUI();
+        };
+
+        // Enemy AI with personality
+        game.enemyDecision = function(enemy, player, health) {
+            const healthPercent = health.hp / health.maxHp;
+            
+            const strategies = {
+                'Springbolt': { aggressive: 0.8, heal: 0.2 },
+                'Beerling': { aggressive: 0.5, heal: 0.5 },
+                'Donuragon': { aggressive: 0.3, heal: 0.7 },
+                'Saxasaurus': { aggressive: 0.6, heal: 0.4 }
+            };
+            
+            const personality = strategies[enemy.name] || { aggressive: 0.5, heal: 0.5 };
+            
+            if (healthPercent < 0.3 && Math.random() < personality.heal) {
+                return 'heal';
+            } else if (player.hp > 80 && Math.random() < 0.3) {
+                return 'special';
+            } else {
+                return 'attack';
+            }
+        };
+
+        // Enemy turn with improved AI
+        game.enemyTurn = function() {
+            if (!this.inBattle) return;
+            const enemy = this.currentEnemy;
+            const active = this.creatures[this.activeCreature];
+            const decision = this.enemyDecision(enemy, active, enemy);
+            
+            if (decision === 'heal') {
+                enemy.hp = Math.min(enemy.hp + 20, enemy.maxHp);
+                this.addLog(`💊 ${enemy.name} used Restore!`);
+            } else if (decision === 'special') {
+                const dmg = this.calculateDamage(enemy, active) * 1.3;
+                active.hp -= dmg;
+                this.addLog(`⚡ ${enemy.name} used Special Attack for ${dmg.toFixed(0)}!`);
+            } else {
+                const dmg = this.calculateDamage(enemy, active);
+                active.hp -= dmg;
+                this.addLog(`${enemy.name} attacked for ${dmg.toFixed(0)}!`);
+            }
+            
+            if (active.hp <= 0) {
+                this.addLog(`😢 ${active.name} fainted!`);
+                this.inBattle = false;
+                for (let i = 0; i < this.creatures.length; i++) {
+                    if (this.creatures[i].hp > 0) {
+                        this.switchCreature(i);
+                        break;
+                    }
+                }
+            }
+            updateUI();
+        };
+
+        // Encounter system
+        game.encounter = function() {
+            if (this.inBattle) return;
+            const creature = this.creatures[Math.floor(Math.random() * this.creatures.length)];
+            this.currentEnemy = { ...creature, hp: creature.maxHp };
+            this.inBattle = true;
+            this.addLog(`⚠️ A wild ${this.currentEnemy.name} appeared!`);
+            updateUI();
+        };
+
+        // Interact with NPC
+        game.interact = function() {
+            for (let npc of this.npcs) {
+                const dx = Math.abs(this.player.x - npc.x);
+                const dy = Math.abs(this.player.y - npc.y);
+                if (dx <= 1 && dy <= 1) {
+                    this.addLog(`${npc.name}: "${npc.msg}"`);
+                    return;
+                }
+            }
+            // Random encounter if not near NPC
+            if (Math.random() > 0.7) {
+                this.encounter();
+            }
+        };
+
+        // Input handling
+        window.addEventListener('keydown', (e) => {
+            game.keys[e.key.toLowerCase()] = true;
+            if (e.key === 'e' || e.key === 'E') game.interact();
+            if (e.key === ' ') {
+                e.preventDefault();
+                if (Math.random() > 0.5) game.encounter();
+            }
+        });
+        window.addEventListener('keyup', (e) => { game.keys[e.key.toLowerCase()] = false; });
+
+        // Movement
+        function update() {
+            const speed = 0.15;
+            if (game.keys['w'] || game.keys['arrowup']) game.player.y = Math.max(0, game.player.y - speed);
+            if (game.keys['s'] || game.keys['arrowdown']) game.player.y = Math.min(ROWS - 1, game.player.y + speed);
+            if (game.keys['a'] || game.keys['arrowleft']) game.player.x = Math.max(0, game.player.x - speed);
+            if (game.keys['d'] || game.keys['arrowright']) game.player.x = Math.min(COLS - 1, game.player.x + speed);
+
+            // Check random encounters
+            if (Math.random() > 0.995 && !game.inBattle) {
+                game.encounter();
+            }
+        }
+
+        // Rendering
+        function draw() {
+            // Clear canvas
+            ctx.fillStyle = '#1a2a3a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Grid
+            ctx.strokeStyle = 'rgba(0, 212, 255, 0.1)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= COLS; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * GRID_SIZE, 0);
+                ctx.lineTo(i * GRID_SIZE, canvas.height);
+                ctx.stroke();
+            }
+            for (let i = 0; i <= ROWS; i++) {
+                ctx.beginPath();
+                ctx.moveTo(0, i * GRID_SIZE);
+                ctx.lineTo(canvas.width, i * GRID_SIZE);
+                ctx.stroke();
+            }
+
+            // NPCs
+            for (let npc of game.npcs) {
+                ctx.fillStyle = '#ff0088';
+                ctx.fillRect(npc.x * GRID_SIZE + 5, npc.y * GRID_SIZE + 5, GRID_SIZE - 10, GRID_SIZE - 10);
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 20px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('🧑', npc.x * GRID_SIZE + GRID_SIZE/2, npc.y * GRID_SIZE + GRID_SIZE/2 + 7);
+            }
+
+            // Creatures
+            for (let creature of game.creatures) {
+                const c = creatureDb.find(cr => cr.name === creature.name);
+                ctx.fillStyle = c.color;
+                ctx.globalAlpha = 0.7;
+                ctx.fillRect(creature.x * GRID_SIZE + 5, creature.y * GRID_SIZE + 5, GRID_SIZE - 10, GRID_SIZE - 10);
+                ctx.globalAlpha = 1;
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(c.icon, creature.x * GRID_SIZE + GRID_SIZE/2, creature.y * GRID_SIZE + GRID_SIZE/2 + 6);
+            }
+
+            // Player (yellow square)
+            ctx.fillStyle = '#ffff00';
+            ctx.fillRect(game.player.x * GRID_SIZE + 5, game.player.y * GRID_SIZE + 5, GRID_SIZE - 10, GRID_SIZE - 10);
+            ctx.fillStyle = '#000';
+            ctx.font = 'bold 18px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('◆', game.player.x * GRID_SIZE + GRID_SIZE/2, game.player.y * GRID_SIZE + GRID_SIZE/2 + 6);
+
+            // Interaction range indicator
+            ctx.strokeStyle = 'rgba(255, 255, 0, 0.3)';
+            ctx.lineWidth = 2;
+            for (let dx = -1; dx <= 1; dx++) {
+                for (let dy = -1; dy <= 1; dy++) {
+                    if (dx === 0 && dy === 0) continue;
+                    const x = (game.player.x + dx) * GRID_SIZE;
+                    const y = (game.player.y + dy) * GRID_SIZE;
+                    ctx.strokeRect(x + 5, y + 5, GRID_SIZE - 10, GRID_SIZE - 10);
+                }
+            }
+        }
+
+        // Game loop
+        function gameLoop() {
+            update();
+            draw();
+            updateUI();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Initialize
+        updateUI();
+        
+        // Load saved game if exists
+        const saved = localStorage.getItem('simpsonsPokeSave');
+        if (saved) {
+            try {
+                const data = JSON.parse(saved);
+                game.creatures = data.creatures;
+                game.caught = data.caught;
+                game.addLog(`✅ Save loaded! Continuing your adventure...`);
+            } catch (e) {
+                game.addLog('Could not load save.');
+            }
+        }
+        
+        // Auto-save every 30 seconds
+        setInterval(() => {
+            const saveData = {
+                creatures: game.creatures.map(c => ({ ...c })),
+                caught: [...game.caught]
+            };
+            localStorage.setItem('simpsonsPokeSave', JSON.stringify(saveData));
+        }, 30000);
+        
+        gameLoop();
+        game.addLog('Welcome to Simpsons Pokemon!');
+        game.addLog('Use WASD to move, E to talk/interact');
+        game.addLog('Walk around to find creatures!');
+        game.addLog(`💾 Auto-saving every 30 seconds`);
+    </script>
+</body>
+</html>
